@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AuroraShield Popup Preview</title>
+  <style>
+    body {
+      margin: 0;
+      background: #060A0F;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+      font-family: system-ui, sans-serif;
+    }
+    .preview-label {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: #4A5C6E;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .popup-frame {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px #1E2A38;
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-label">Extension Popup — 360px viewport</div>
+  <div class="popup-frame">
+    <iframe
+      src="./popup-standalone.html"
+      width="360"
+      height="580"
+      style="border:none;display:block;"
+    ></iframe>
+  </div>
+</body>
+</html>

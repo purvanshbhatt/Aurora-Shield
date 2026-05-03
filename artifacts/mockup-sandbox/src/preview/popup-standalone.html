@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AuroraShield</title>
+  <style>
+    /* ─── Reset ───────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ─── Tokens ──────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:        #0B0F14;
+      --surface:   #111720;
+      --surface2:  #161D27;
+      --border:    #1E2A38;
+      --green:     #00FF9C;
+      --yellow:    #FFC857;
+      --red:       #FF4D4D;
+      --text:      #E2EAF4;
+      --muted:     #4A5C6E;
+      --font:      'Inter', 'Segoe UI', system-ui, sans-serif;
+      --mono:      'SF Mono', 'Fira Code', monospace;
+      --radius:    10px;
+    }
+
+    html, body {
+      width: 360px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .shell { display: flex; flex-direction: column; min-height: 560px; }
+
+    /* ─── Header ── */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      display: flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #001A10, #003320);
+      border: 1px solid #00FF9C22; border-radius: 8px; color: var(--green);
+    }
+    .brand-block { display: flex; flex-direction: column; gap: 1px; }
+    .brand { font-size: 14px; font-weight: 400; color: var(--text); letter-spacing: 0.01em; }
+    .brand strong { font-weight: 700; color: var(--green); }
+    .tagline { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    .status-block {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 10px 4px 8px;
+    }
+    .pulse-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--yellow); flex-shrink: 0;
+      animation: pulse-yellow 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-yellow { 0%,100%{box-shadow:0 0 0 0 #FFC85755} 50%{box-shadow:0 0 0 5px #FFC85711} }
+    @keyframes pulse-red    { 0%,100%{box-shadow:0 0 0 0 #FF4D4D77} 50%{box-shadow:0 0 0 6px #FF4D4D22} }
+    @keyframes scan-sweep   { 0%{left:-40%} 100%{left:100%} }
+    @keyframes feed-in      { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    .status-text { font-size: 11px; font-weight: 500; color: var(--yellow); letter-spacing: 0.04em; }
+
+    /* ─── Gauge ── */
+    .gauge-section {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 20px 16px 16px; border-bottom: 1px solid var(--border); position: relative;
+    }
+    .gauge-wrap { position: relative; width: 120px; height: 120px; }
+    .gauge-svg { transform: rotate(-90deg); }
+    .gauge-track { fill: none; stroke: var(--surface2); stroke-width: 9; }
+    .gauge-arc {
+      fill: none; stroke: var(--yellow); stroke-width: 9; stroke-linecap: round;
+      transition: stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1), stroke 0.5s ease;
+    }
+    .gauge-glow {
+      fill: none; stroke: var(--yellow); stroke-width: 18; stroke-linecap: round;
+      opacity: 0.08; filter: blur(4px);
+    }
+    .gauge-inner {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    }
+    .gauge-score { font-family: var(--mono); font-size: 30px; font-weight: 700; color: var(--yellow); line-height: 1; }
+    .gauge-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+    .scan-indicator {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 12px; font-size: 11px; color: var(--muted);
+    }
+    .scan-bar {
+      width: 80px; height: 2px; background: var(--surface2); border-radius: 1px; overflow: hidden; position: relative;
+    }
+    .scan-bar::after {
+      content: ''; position: absolute; top: 0; left: -40%; width: 40%; height: 100%;
+      background: linear-gradient(90deg, transparent, var(--yellow), transparent);
+      animation: scan-sweep 1.2s ease-in-out infinite;
+    }
+
+    /* ─── Breakdown ── */
+    .breakdown {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .section-head {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); display: flex; align-items: center; gap: 6px;
+    }
+    .threat-row { display: flex; align-items: center; gap: 10px; }
+    .threat-icon {
+      display: flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+    }
+    .threat-icon.inject { background:#FF4D4D18;color:#FF4D4D;border:1px solid #FF4D4D22; }
+    .threat-icon.phish  { background:#FFC85718;color:#FFC857;border:1px solid #FFC85722; }
+    .threat-icon.url    { background:#00FF9C18;color:#00FF9C;border:1px solid #00FF9C22; }
+    .threat-label { font-size: 12px; color: var(--text); width: 110px; flex-shrink: 0; }
+    .mini-bar-wrap { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+    .mini-bar { height: 100%; border-radius: 2px; transition: width 0.7s; }
+    .threat-pct { font-family: var(--mono); font-size: 11px; width: 28px; text-align: right; flex-shrink: 0; }
+
+    /* ─── Feed ── */
+    .feed-section {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      flex: 1; display: flex; flex-direction: column; gap: 8px;
+    }
+    .feed-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--yellow);
+      animation: pulse-yellow 2s ease-in-out infinite; display: inline-block;
+    }
+    .feed-list { display: flex; flex-direction: column; gap: 5px; max-height: 130px; overflow-y: auto; }
+    .feed-list::-webkit-scrollbar { width: 3px; }
+    .feed-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .feed-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 10px; animation: feed-in 0.2s ease-out;
+    }
+    .feed-type-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .feed-type-dot.inject { background: var(--red); box-shadow: 0 0 6px #FF4D4D66; }
+    .feed-type-dot.phish  { background: var(--yellow); box-shadow: 0 0 6px #FFC85766; }
+    .feed-type-dot.url    { background: var(--green); box-shadow: 0 0 6px #00FF9C66; }
+    .feed-content { flex: 1; min-width: 0; }
+    .feed-msg { font-size: 11.5px; color: var(--text); line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .feed-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+    .feed-badge { font-size: 9px; font-weight: 600; letter-spacing: 0.08em; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; }
+    .feed-badge.inject { background: #FF4D4D22; color: var(--red); }
+    .feed-badge.phish  { background: #FFC85722; color: var(--yellow); }
+    .feed-badge.url    { background: #00FF9C22; color: var(--green); }
+    .feed-time { font-size: 9.5px; color: var(--muted); font-family: var(--mono); }
+
+    /* ─── Actions ── */
+    .actions { display: flex; gap: 6px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+      padding: 8px 6px; border-radius: var(--radius); font-family: var(--font);
+      font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid transparent;
+      transition: all 0.15s ease; letter-spacing: 0.02em;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background:#00FF9C18; border-color:#00FF9C33; color:var(--green); }
+    .btn-primary:hover { background:#00FF9C28; border-color:#00FF9C66; box-shadow:0 0 14px #00FF9C22; }
+    .btn-ghost { background:var(--surface); border-color:var(--border); color:var(--text); }
+    .btn-ghost:hover { background:var(--surface2); border-color:var(--muted); }
+    .btn-danger { background:#FF4D4D12; border-color:#FF4D4D2A; color:var(--red); }
+    .btn-danger:hover { background:#FF4D4D22; border-color:#FF4D4D55; }
+
+    /* ─── Footer ── */
+    .footer { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: var(--surface); }
+    .footer-version { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+    .footer-link { font-size: 11px; color: #00FF9C99; text-decoration: none; }
+    .footer-link:hover { color: var(--green); }
+    .shell.warning { box-shadow: inset 0 0 30px #FFC8570A; }
+  </style>
+</head>
+<body>
+<div class="shell warning">
+
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <div class="brand-block">
+        <span class="brand">Aurora<strong>Shield</strong></span>
+        <span class="tagline">Threat Intelligence</span>
+      </div>
+    </div>
+    <div class="status-block">
+      <div class="pulse-dot"></div>
+      <span class="status-text">Warning</span>
+    </div>
+  </header>
+
+  <section class="gauge-section">
+    <div class="gauge-wrap">
+      <svg class="gauge-svg" viewBox="0 0 120 120" width="120" height="120">
+        <circle class="gauge-track" cx="60" cy="60" r="48" />
+        <circle class="gauge-arc" cx="60" cy="60" r="48"
+          stroke-dasharray="301.6" stroke-dashoffset="150.8" />
+        <circle class="gauge-glow" cx="60" cy="60" r="48"
+          stroke-dasharray="301.6" stroke-dashoffset="150.8" />
+      </svg>
+      <div class="gauge-inner">
+        <div class="gauge-score">50</div>
+        <div class="gauge-label">Suspicious</div>
+      </div>
+    </div>
+    <div class="scan-indicator">
+      <div class="scan-bar"></div>
+      <span>Analyzing page...</span>
+    </div>
+  </section>
+
+  <section class="breakdown">
+    <div class="section-head">Threat Breakdown</div>
+
+    <div class="threat-row">
+      <div class="threat-icon inject">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="threat-label">Prompt Injection</div>
+      <div class="mini-bar-wrap">
+        <div class="mini-bar" style="width:72%;background:#FF4D4D"></div>
+      </div>
+      <div class="threat-pct" style="color:#FF4D4D">72%</div>
+    </div>
+
+    <div class="threat-row">
+      <div class="threat-icon phish">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="threat-label">Phishing</div>
+      <div class="mini-bar-wrap">
+        <div class="mini-bar" style="width:38%;background:#FFC857"></div>
+      </div>
+      <div class="threat-pct" style="color:#FFC857">38%</div>
+    </div>
+
+    <div class="threat-row">
+      <div class="threat-icon url">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </div>
+      <div class="threat-label">URL Risk</div>
+      <div class="mini-bar-wrap">
+        <div class="mini-bar" style="width:20%;background:#00FF9C"></div>
+      </div>
+      <div class="threat-pct" style="color:#00FF9C">20%</div>
+    </div>
+  </section>
+
+  <section class="feed-section">
+    <div class="section-head">
+      Live Detection Feed
+      <span class="feed-dot"></span>
+    </div>
+    <div class="feed-list">
+      <div class="feed-item">
+        <div class="feed-type-dot inject"></div>
+        <div class="feed-content">
+          <div class="feed-msg">Detected: Ignore instructions, Role override</div>
+          <div class="feed-meta">
+            <span class="feed-badge inject">Injection</span>
+            <span class="feed-time">2m ago</span>
+          </div>
+        </div>
+      </div>
+      <div class="feed-item">
+        <div class="feed-type-dot phish"></div>
+        <div class="feed-content">
+          <div class="feed-msg">Phrases: verify your account, urgent action</div>
+          <div class="feed-meta">
+            <span class="feed-badge phish">Phishing</span>
+            <span class="feed-time">14m ago</span>
+          </div>
+        </div>
+      </div>
+      <div class="feed-item">
+        <div class="feed-type-dot url"></div>
+        <div class="feed-content">
+          <div class="feed-msg">2 suspicious URL patterns detected</div>
+          <div class="feed-meta">
+            <span class="feed-badge url">URL Risk</span>
+            <span class="feed-time">31m ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="btn btn-primary">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Scan Page
+    </button>
+    <button class="btn btn-ghost">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      View Details
+    </button>
+    <button class="btn btn-danger">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Report
+    </button>
+  </div>
+
+  <footer class="footer">
+    <span class="footer-version">v1.0.0</span>
+    <a href="#" class="footer-link">Open Dashboard</a>
+  </footer>
+</div>
+</body>
+</html>
