@@ -3,6 +3,8 @@
  * Circular gauge, threat breakdown, live feed, action buttons.
  */
 
+const DEFAULT_API_BASE = "https://aurora-shield--PurvanshBhatt.replit.app/api";
+
 // ─── Constants ─────────────────────────────────────────────────────────────
 const ARC_CIRCUMFERENCE = 2 * Math.PI * 48; // r=48 → ≈301.6
 
@@ -52,6 +54,8 @@ const btnScan     = document.getElementById("btnScan");
 const btnDetails  = document.getElementById("btnDetails");
 const btnReport   = document.getElementById("btnReport");
 const dashLink    = document.getElementById("dashLink");
+const backendUrlInput = document.getElementById("backendUrl");
+const useMockInput = document.getElementById("useMock");
 
 // ─── Gauge Update ──────────────────────────────────────────────────────────
 function setGauge(score) {
@@ -277,6 +281,22 @@ function showReportConfirmation() {
   }, 2000);
 }
 
+function loadBackendConfig() {
+  chrome.storage.local.get(["backendUrl", "useMock"], items => {
+    backendUrlInput.value = (typeof items.backendUrl === "string" && items.backendUrl.trim())
+      ? items.backendUrl.trim()
+      : DEFAULT_API_BASE;
+    useMockInput.checked = !!items.useMock;
+  });
+}
+
+function saveBackendConfig() {
+  chrome.storage.local.set({
+    backendUrl: backendUrlInput.value.trim(),
+    useMock: useMockInput.checked,
+  });
+}
+
 // ─── Init ──────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
   setGauge(0);
@@ -287,13 +307,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   btnScan.addEventListener("click", runPageScan);
 
   btnDetails.addEventListener("click", () => {
-    chrome.tabs.create({ url: "https://your-replit-app.replit.app/threats" });
+    chrome.tabs.create({ url: "https://aurora-shield--PurvanshBhatt.replit.app/threats" });
   });
 
   btnReport.addEventListener("click", showReportConfirmation);
 
+  backendUrlInput.addEventListener("change", saveBackendConfig);
+  useMockInput.addEventListener("change", saveBackendConfig);
+  loadBackendConfig();
+
   dashLink.addEventListener("click", e => {
     e.preventDefault();
-    chrome.tabs.create({ url: "https://your-replit-app.replit.app/" });
+    chrome.tabs.create({ url: "https://aurora-shield--PurvanshBhatt.replit.app/" });
   });
 });

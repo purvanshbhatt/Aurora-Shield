@@ -6,7 +6,49 @@
  * SETUP: Replace API_BASE with your deployed AuroraShield API URL.
  */
 
-const API_BASE = "https://your-replit-app.replit.app/api";
+const DEFAULT_API_BASE = "https://aurora-shield--PurvanshBhatt.replit.app/api";
+const MOCK_ANALYZE = {
+  prompt: {
+    risk_score: 72,
+    category: "prompt_injection",
+    explanation: "Instruction override detected",
+    patterns: ["ignore previous", "system prompt", "role override"],
+  },
+  phishing: {
+    risk_score: 68,
+    category: "phishing",
+    explanation: "Phishing language and credential bait detected",
+    patterns: ["verify account", "password", "urgent action"],
+  },
+  url: {
+    risk_score: 58,
+    category: "suspicious_url",
+    explanation: "Suspicious URL patterns detected",
+    patterns: ["typosquatting", "long URL", "mixed subdomains"],
+  },
+};
+
+const runtimeConfig = {
+  backendUrl: DEFAULT_API_BASE,
+  useMock: false,
+};
+
+function applyStoredConfig(items = {}) {
+  if (typeof items.backendUrl === "string" && items.backendUrl.trim()) {
+    runtimeConfig.backendUrl = items.backendUrl.trim();
+  }
+  if (typeof items.useMock === "boolean") {
+    runtimeConfig.useMock = items.useMock;
+  }
+}
+
+if (chrome?.storage?.local) {
+  chrome.storage.local.get(["backendUrl", "useMock"], applyStoredConfig);
+  chrome.storage.onChanged.addListener(changes => {
+    if (changes.backendUrl) runtimeConfig.backendUrl = changes.backendUrl.newValue || DEFAULT_API_BASE;
+    if (changes.useMock) runtimeConfig.useMock = !!changes.useMock.newValue;
+  });
+}
 
 // ─── Inject shared CSS once ────────────────────────────────────────────────
 (function injectStyles() {
@@ -195,7 +237,11 @@ function getSiteContext() {
 }
 
 async function callAnalyze(type, data) {
-  const res = await fetch(`${API_BASE}/analyze`, {
+  if (runtimeConfig.useMock) {
+    return MOCK_ANALYZE[type] || MOCK_ANALYZE.prompt;
+  }
+
+  const res = await fetch(`${runtimeConfig.backendUrl}/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ type, data }),

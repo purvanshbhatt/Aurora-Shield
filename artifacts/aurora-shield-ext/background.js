@@ -3,7 +3,29 @@
  * Handles API calls with caching and tab risk tracking.
  */
 
-const API_BASE = "https://your-api-host.replit.app/api"; // Replace with your deployed API URL
+const DEFAULT_API_BASE = "https://aurora-shield--PurvanshBhatt.replit.app/api";
+
+const runtimeConfig = {
+  backendUrl: DEFAULT_API_BASE,
+  useMock: false,
+};
+
+function applyStoredConfig(items = {}) {
+  if (typeof items.backendUrl === "string" && items.backendUrl.trim()) {
+    runtimeConfig.backendUrl = items.backendUrl.trim();
+  }
+  if (typeof items.useMock === "boolean") {
+    runtimeConfig.useMock = items.useMock;
+  }
+}
+
+if (chrome?.storage?.local) {
+  chrome.storage.local.get(["backendUrl", "useMock"], applyStoredConfig);
+  chrome.storage.onChanged.addListener(changes => {
+    if (changes.backendUrl) runtimeConfig.backendUrl = changes.backendUrl.newValue || DEFAULT_API_BASE;
+    if (changes.useMock) runtimeConfig.useMock = !!changes.useMock.newValue;
+  });
+}
 
 // ─── In-memory cache ──────────────────────────────────────────────────────
 const promptCache = new Map();
@@ -37,13 +59,65 @@ function setCache(map, key, data) {
 
 // ─── API Call Helper ──────────────────────────────────────────────────────
 async function callApi(endpoint, body) {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  if (runtimeConfig.useMock) {
+    return mockResponse(endpoint, body);
+  }
+
+  const response = await fetch(`${runtimeConfig.backendUrl}${endpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!response.ok) throw new Error(`API error ${response.status}`);
   return response.json();
+}
+
+function mockResponse(endpoint, body) {
+  if (endpoint === "/analyze/prompt") {
+    return Promise.resolve({
+      riskLevel: "high",
+      riskScore: 0.78,
+      category: "prompt_injection",
+      explanation: "Instruction override pattern detected",
+      patterns: ["ignore previous", "system prompt", "role override"],
+    });
+  }
+
+  if (endpoint === "/analyze/phishing") {
+    return Promise.resolve({
+      riskLevel: "medium",
+      riskScore: 0.66,
+      category: "phishing",
+      explanation: "Credential bait and urgency language detected",
+      patterns: ["verify account", "password", "urgent action"],
+    });
+  }
+
+  if (endpoint === "/analyze/url") {
+    return Promise.resolve({
+      overallRiskScore: 0.54,
+      urlResults: [{ flags: ["typosquatting", "long URL"] }],
+    });
+  }
+
+  if (endpoint === "/analyze/stats") {
+    return Promise.resolve({
+      totalScans: 12,
+      promptInjections: 4,
+      phishingDetected: 3,
+      urlRisks: 5,
+    });
+  }
+
+  if (endpoint === "/analyze/recent") {
+    return Promise.resolve([
+      { type: "prompt_injection", summary: "Instruction override detected", detectedAt: new Date().toISOString(), riskScore: 0.78 },
+      { type: "phishing", summary: "Suspicious credential request", detectedAt: new Date(Date.now() - 8 * 60 * 1000).toISOString(), riskScore: 0.66 },
+      { type: "suspicious_url", summary: "Suspicious URL pattern found", detectedAt: new Date(Date.now() - 17 * 60 * 1000).toISOString(), riskScore: 0.54 },
+    ]);
+  }
+
+  return Promise.resolve({ error: "Unknown mock endpoint" });
 }
 
 // ─── Message Handler ──────────────────────────────────────────────────────
@@ -101,12 +175,12 @@ async function handleMessage(message, sender) {
   }
 
   if (type === "GET_STATS") {
-    const response = await fetch(`${API_BASE}/analyze/stats`);
+    const response = await fetch(`${runtimeConfig.backendUrl}/analyze/stats`);
     return response.json();
   }
 
   if (type === "GET_RECENT") {
-    const response = await fetch(`${API_BASE}/analyze/recent`);
+    const response = await fetch(`${runtimeConfig.backendUrl}/analyze/recent`);
     return response.json();
   }
 
