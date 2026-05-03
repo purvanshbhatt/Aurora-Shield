@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AuroraShield Security API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: analyze
+    description: Security analysis operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,97 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /analyze/prompt:
+    post:
+      operationId: analyzePrompt
+      tags: [analyze]
+      summary: Analyze text for prompt injection
+      description: Checks user input for prompt injection patterns and LLM attacks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzePromptBody"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromptAnalysisResult"
+
+  /analyze/phishing:
+    post:
+      operationId: analyzePhishing
+      tags: [analyze]
+      summary: Analyze content for phishing
+      description: Scans page content or email text for phishing indicators
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzePhishingBody"
+      responses:
+        "200":
+          description: Phishing analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhishingAnalysisResult"
+
+  /analyze/url:
+    post:
+      operationId: analyzeUrl
+      tags: [analyze]
+      summary: Analyze URLs for suspicious patterns
+      description: Checks URLs for domain length, suspicious patterns, and known threats
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeUrlBody"
+      responses:
+        "200":
+          description: URL analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UrlAnalysisResult"
+
+  /analyze/stats:
+    get:
+      operationId: getAnalysisStats
+      tags: [analyze]
+      summary: Get detection statistics
+      description: Returns aggregate stats on threats detected across all sessions
+      responses:
+        "200":
+          description: Detection statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisStats"
+
+  /analyze/recent:
+    get:
+      operationId: getRecentThreats
+      tags: [analyze]
+      summary: Get recent detected threats
+      description: Returns the most recently detected threats for display in the dashboard
+      responses:
+        "200":
+          description: Recent threats list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ThreatEvent"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +127,194 @@ components:
       required:
         - status
 
+    AnalyzePromptBody:
+      type: object
+      properties:
+        text:
+          type: string
+          description: The text to analyze for prompt injection
+        context:
+          type: string
+          description: The site context (e.g. chatgpt, gmail, outlook)
+      required:
+        - text
+
+    PromptAnalysisResult:
+      type: object
+      properties:
+        riskScore:
+          type: number
+          description: Risk score from 0.0 (safe) to 1.0 (critical)
+        riskLevel:
+          type: string
+          enum: [safe, low, medium, high, critical]
+        patterns:
+          type: array
+          items:
+            type: string
+          description: Detected injection patterns
+        recommendation:
+          type: string
+        cached:
+          type: boolean
+      required:
+        - riskScore
+        - riskLevel
+        - patterns
+        - recommendation
+        - cached
+
+    AnalyzePhishingBody:
+      type: object
+      properties:
+        content:
+          type: string
+          description: Page or email content to scan
+        url:
+          type: string
+          description: The page URL for context
+      required:
+        - content
+
+    PhishingAnalysisResult:
+      type: object
+      properties:
+        riskScore:
+          type: number
+        riskLevel:
+          type: string
+          enum: [safe, low, medium, high, critical]
+        suspiciousPhrases:
+          type: array
+          items:
+            type: string
+          description: Suspicious phrases found in the content
+        indicators:
+          type: array
+          items:
+            type: string
+          description: Phishing indicator types detected
+        cached:
+          type: boolean
+      required:
+        - riskScore
+        - riskLevel
+        - suspiciousPhrases
+        - indicators
+        - cached
+
+    AnalyzeUrlBody:
+      type: object
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+          description: List of URLs to analyze
+        pageUrl:
+          type: string
+          description: The current page URL
+      required:
+        - urls
+
+    UrlAnalysisResult:
+      type: object
+      properties:
+        overallRiskScore:
+          type: number
+        riskLevel:
+          type: string
+          enum: [safe, low, medium, high, critical]
+        urlResults:
+          type: array
+          items:
+            $ref: "#/components/schemas/SingleUrlResult"
+        cached:
+          type: boolean
+      required:
+        - overallRiskScore
+        - riskLevel
+        - urlResults
+        - cached
+
+    SingleUrlResult:
+      type: object
+      properties:
+        url:
+          type: string
+        riskScore:
+          type: number
+        flags:
+          type: array
+          items:
+            type: string
+      required:
+        - url
+        - riskScore
+        - flags
+
+    AnalysisStats:
+      type: object
+      properties:
+        totalScans:
+          type: integer
+        promptInjections:
+          type: integer
+        phishingDetected:
+          type: integer
+        suspiciousUrls:
+          type: integer
+        threatsByLevel:
+          type: object
+          properties:
+            safe:
+              type: integer
+            low:
+              type: integer
+            medium:
+              type: integer
+            high:
+              type: integer
+            critical:
+              type: integer
+          required:
+            - safe
+            - low
+            - medium
+            - high
+            - critical
+      required:
+        - totalScans
+        - promptInjections
+        - phishingDetected
+        - suspiciousUrls
+        - threatsByLevel
+
+    ThreatEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [prompt_injection, phishing, suspicious_url]
+        riskLevel:
+          type: string
+          enum: [safe, low, medium, high, critical]
+        riskScore:
+          type: number
+        summary:
+          type: string
+        context:
+          type: string
+        detectedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - riskLevel
+        - riskScore
+        - summary
+        - context
+        - detectedAt

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AuroraShield</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="header">
+      <div class="header-left">
+        <div class="shield-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand">AuroraShield</div>
+          <div class="version">v1.0.0</div>
+        </div>
+      </div>
+      <div class="status-dot" id="statusDot" title="Shield active"></div>
+    </header>
+
+    <section class="page-risk">
+      <div class="section-label">CURRENT PAGE</div>
+      <div class="risk-display" id="pageRisk">
+        <div class="risk-score" id="riskScore">--</div>
+        <div class="risk-level" id="riskLevel">SCANNING...</div>
+      </div>
+      <div class="risk-bar">
+        <div class="risk-bar-fill" id="riskBarFill"></div>
+      </div>
+    </section>
+
+    <section class="stats">
+      <div class="section-label">SESSION STATS</div>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="totalScans">--</div>
+          <div class="stat-key">TOTAL SCANS</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value threat" id="injections">--</div>
+          <div class="stat-key">INJECTIONS</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value threat" id="phishing">--</div>
+          <div class="stat-key">PHISHING</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value warn" id="suspicious">--</div>
+          <div class="stat-key">SUSP URLS</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="threats">
+      <div class="section-label">RECENT THREATS</div>
+      <div id="threatList" class="threat-list">
+        <div class="loading">Loading...</div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <a href="#" id="dashboardLink" class="footer-link">Open Dashboard</a>
+      <span class="footer-sep">·</span>
+      <span class="footer-active">Shield Active</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

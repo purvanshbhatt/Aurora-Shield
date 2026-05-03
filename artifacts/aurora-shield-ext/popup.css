@@ -1,0 +1,249 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  width: 320px;
+  min-height: 400px;
+  background: #0a0a0a;
+  color: #e5e5e5;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shield-icon {
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+}
+
+.brand {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0f0f0;
+  letter-spacing: 0.05em;
+}
+
+.version {
+  font-size: 10px;
+  color: #444;
+  margin-top: 1px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e88;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 8px #22c55e88; }
+  50% { box-shadow: 0 0 14px #22c55ecc; }
+}
+
+/* Page Risk */
+.page-risk {
+  padding: 14px 16px;
+  border-bottom: 1px solid #111;
+}
+
+.section-label {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: #444;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.risk-display {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.risk-score {
+  font-size: 28px;
+  font-weight: 700;
+  color: #38bdf8;
+  line-height: 1;
+}
+
+.risk-level {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #666;
+}
+
+.risk-level.safe { color: #22c55e; }
+.risk-level.low { color: #eab308; }
+.risk-level.medium { color: #f97316; }
+.risk-level.high { color: #ef4444; }
+.risk-level.critical { color: #ff2020; }
+
+.risk-bar {
+  height: 3px;
+  background: #1a1a1a;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.risk-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 2px;
+  background: #38bdf8;
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+/* Stats */
+.stats {
+  padding: 14px 16px;
+  border-bottom: 1px solid #111;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.stat-item {
+  background: #0f0f0f;
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.stat-value.threat { color: #ef4444; }
+.stat-value.warn { color: #eab308; }
+
+.stat-key {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: #333;
+  margin-top: 3px;
+}
+
+/* Threats */
+.threats {
+  padding: 14px 16px;
+  flex: 1;
+}
+
+.threat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.threat-list::-webkit-scrollbar { width: 3px; }
+.threat-list::-webkit-scrollbar-track { background: transparent; }
+.threat-list::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 2px; }
+
+.threat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f0f0f;
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.threat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.threat-dot.safe { background: #22c55e; }
+.threat-dot.low { background: #eab308; }
+.threat-dot.medium { background: #f97316; }
+.threat-dot.high { background: #ef4444; }
+.threat-dot.critical { background: #ff2020; }
+
+.threat-info { flex: 1; min-width: 0; }
+
+.threat-type {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.threat-summary {
+  font-size: 11px;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.threat-time {
+  font-size: 9px;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.loading, .empty {
+  color: #333;
+  text-align: center;
+  padding: 20px;
+  font-size: 11px;
+}
+
+/* Footer */
+.footer {
+  padding: 10px 16px;
+  border-top: 1px solid #111;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #333;
+}
+
+.footer-link {
+  color: #38bdf8;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+}
+
+.footer-link:hover { text-decoration: underline; }
+.footer-sep { color: #1a1a1a; }
+.footer-active { color: #22c55e; letter-spacing: 0.05em; }
