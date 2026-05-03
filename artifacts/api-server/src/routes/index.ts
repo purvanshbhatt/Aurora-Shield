@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
-import analyzeRouter from "./analyze";
+import analyzeRouter from "./analyze-new";
 
 const router: IRouter = Router();
 
