@@ -1,0 +1,84 @@
+Act as a Senior Product Designer + Frontend Engineer.
+
+Task: Redesign the AuroraShield browser extension UI to look like a premium cybersecurity product (similar to modern SOC dashboards).
+
+Tech Constraints:
+- Vanilla JS or React (lightweight)
+- Must work inside browser extension popup (small viewport)
+- Dark mode default
+
+Design Goals:
+- Clean, minimal, high signal-to-noise ratio
+- Real-time feedback feel
+- Not flashy — professional and sharp
+
+Core UI Components:
+
+1. Header:
+   - Product name: AuroraShield
+   - Status indicator (Active / Monitoring)
+   - Small animated pulse dot (green/yellow/red)
+
+2. Risk Score Card (MAIN FOCUS):
+   - Circular progress / gauge (0–100)
+   - Color logic:
+     - Green (0–30)
+     - Yellow (30–70)
+     - Red (70–100)
+   - Label:
+     - "Low Risk", "Suspicious", "High Risk"
+
+3. Threat Breakdown Section:
+   - Show:
+     - Prompt Injection Risk
+     - Phishing Risk
+     - URL Risk
+   - Each with:
+     - mini progress bar
+     - icon
+
+4. Live Detection Feed:
+   - Scrollable list
+   - Example:
+     - "⚠️ Suspicious instruction override detected"
+     - "🔗 Suspicious URL pattern found"
+   - Timestamp per item
+
+5. Action Buttons:
+   - "Scan Page"
+   - "View Details"
+   - "Report Threat"
+
+6. Micro Interactions:
+   - Smooth transitions
+   - Hover states
+   - Subtle glow on high risk
+
+7. Visual Style:
+   - Dark background (#0B0F14)
+   - Accent colors:
+     - Green (#00FF9C)
+     - Yellow (#FFC857)
+     - Red (#FF4D4D)
+   - Soft shadows, rounded corners
+
+8. Typography:
+   - Modern sans-serif
+   - Clear hierarchy (no clutter)
+
+9. Performance:
+   - Lightweight (no heavy libs)
+   - Fast load
+
+10. Output:
+   - Clean popup.html
+   - styles.css
+   - popup.js
+   - Reusable UI components
+
+Bonus (if possible):
+- Add subtle “threat scan animation” when analyzing
+- Add icon badge update (extension icon color based on risk)
+
+Goal:
+Make AuroraShield feel like a real commercial cybersecurity product — not a student project.
