@@ -287,4 +287,158 @@ router.get("/recent", async (_req, res) => {
   })));
 });
 
+// ─── Unified /analyze endpoint (extension-compatible format) ───────────────
+// Accepts: { type: "prompt" | "phishing" | "url", data: string }
+// Returns: { risk_score: 0-100, category: string, explanation: string }
+router.post("/", async (req, res) => {
+  const { type, data } = req.body as { type?: string; data?: string };
+
+  if (!data || typeof data !== "string") {
+    return res.status(400).json({ error: "Missing required field: data (string)" });
+  }
+
+  const analysisType = type ?? "prompt";
+
+  if (analysisType === "prompt" || analysisType === "prompt_injection") {
+    const key = hashKey(data);
+    let result: ReturnType<typeof detectPromptInjection>;
+    let wasCached = false;
+
+    if (promptCache.has(key)) {
+      result = promptCache.get(key)!;
+      wasCached = true;
+    } else {
+      result = detectPromptInjection(data);
+      promptCache.set(key, result);
+      if (promptCache.size > 500) promptCache.delete(promptCache.keys().next().value!);
+
+      if (result.riskLevel !== "safe") {
+        await db.insert(threatEventsTable).values({
+          type: "prompt_injection",
+          riskLevel: result.riskLevel,
+          riskScore: result.riskScore,
+          summary: result.patterns.length > 0
+            ? `Detected: ${result.patterns.slice(0, 3).join(", ")}`
+            : "Prompt injection attempt",
+          context: "extension",
+        });
+      }
+    }
+
+    const riskScore = Math.round(result.riskScore * 100);
+    const categories: Record<string, string> = {
+      safe: "safe",
+      low: "prompt_injection",
+      medium: "prompt_injection",
+      high: "prompt_injection",
+      critical: "prompt_injection",
+    };
+
+    return res.json({
+      risk_score: riskScore,
+      category: categories[result.riskLevel] ?? "prompt_injection",
+      explanation: result.recommendation,
+      patterns: result.patterns,
+      risk_level: result.riskLevel,
+      cached: wasCached,
+    });
+  }
+
+  if (analysisType === "phishing") {
+    const key = hashKey(data.slice(0, 500));
+    let result: ReturnType<typeof detectPhishing>;
+    let wasCached = false;
+
+    if (phishingCache.has(key)) {
+      result = phishingCache.get(key)!;
+      wasCached = true;
+    } else {
+      result = detectPhishing(data);
+      phishingCache.set(key, result);
+      if (phishingCache.size > 500) phishingCache.delete(phishingCache.keys().next().value!);
+
+      if (result.riskLevel !== "safe") {
+        await db.insert(threatEventsTable).values({
+          type: "phishing",
+          riskLevel: result.riskLevel,
+          riskScore: result.riskScore,
+          summary: result.suspiciousPhrases.length > 0
+            ? `Phrases: ${result.suspiciousPhrases.slice(0, 3).join(", ")}`
+            : "Phishing content detected",
+          context: "extension",
+        });
+      }
+    }
+
+    const riskScore = Math.round(result.riskScore * 100);
+    const explanation = result.suspiciousPhrases.length > 0
+      ? `Phishing indicators: ${result.suspiciousPhrases.slice(0, 3).join(", ")}`
+      : result.indicators.length > 0
+        ? `Detected: ${result.indicators.slice(0, 3).join(", ")}`
+        : "No phishing indicators found.";
+
+    return res.json({
+      risk_score: riskScore,
+      category: result.riskLevel === "safe" ? "safe" : "phishing",
+      explanation,
+      suspicious_phrases: result.suspiciousPhrases,
+      indicators: result.indicators,
+      risk_level: result.riskLevel,
+      cached: wasCached,
+    });
+  }
+
+  if (analysisType === "url") {
+    const urlList = data.startsWith("[")
+      ? (JSON.parse(data) as string[])
+      : [data];
+
+    const urlResults = urlList.map(u => {
+      const key = hashKey(u);
+      if (urlCache.has(key)) return { ...urlCache.get(key)!, _cached: true };
+      const r = analyzeUrl(u);
+      urlCache.set(key, r);
+      if (urlCache.size > 1000) urlCache.delete(urlCache.keys().next().value!);
+      return r;
+    });
+
+    const overallScore = urlResults.length > 0
+      ? Math.max(...urlResults.map(r => r.riskScore))
+      : 0;
+
+    let riskLevel: "safe" | "low" | "medium" | "high" | "critical";
+    if (overallScore === 0) riskLevel = "safe";
+    else if (overallScore < 0.25) riskLevel = "low";
+    else if (overallScore < 0.5) riskLevel = "medium";
+    else if (overallScore < 0.75) riskLevel = "high";
+    else riskLevel = "critical";
+
+    const highRisk = urlResults.filter(r => r.riskScore > 0.3);
+    if (highRisk.length > 0 && !urlResults.every(r => (r as any)._cached)) {
+      await db.insert(threatEventsTable).values({
+        type: "suspicious_url",
+        riskLevel,
+        riskScore: overallScore,
+        summary: `${highRisk.length} suspicious URL(s) detected`,
+        context: "extension",
+      });
+    }
+
+    const topFlags = urlResults.flatMap(r => r.flags).slice(0, 3);
+    const explanation = topFlags.length > 0
+      ? `Suspicious patterns: ${topFlags.join(", ")}`
+      : "No suspicious URL patterns found.";
+
+    return res.json({
+      risk_score: Math.round(overallScore * 100),
+      category: riskLevel === "safe" ? "safe" : "suspicious_url",
+      explanation,
+      url_results: urlResults.map(({ url, riskScore, flags }) => ({ url, riskScore, flags })),
+      risk_level: riskLevel,
+    });
+  }
+
+  return res.status(400).json({ error: `Unknown analysis type: ${analysisType}. Use "prompt", "phishing", or "url".` });
+});
+
 export default router;
